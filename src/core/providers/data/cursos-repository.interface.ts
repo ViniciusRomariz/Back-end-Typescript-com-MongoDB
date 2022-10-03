@@ -1,5 +1,3 @@
-
-
 import { CursoEntity } from "@core/entity/curso.entity";
 
 
@@ -9,14 +7,29 @@ export type CursoRespositorySearchParams = {
 
 
 export type CursoRespositoryCreateParams = {
+    cursoId: string;
     dataInicio: string;    
     descricao: string;    
 }
 
+
+export type CursoRespositoryUpdateParams = {
+    cursoId: string;
+    data: {
+        dataInicio?: string;    
+        descricao?: string;    
+    }
+}
+
 export interface CursoRepositoryInterface {
     
-    search(model: CursoRespositorySearchParams): CursoEntity[];
+    search(model: CursoRespositorySearchParams): Promise<CursoEntity[]>;
+    
+    findById(id: string): Promise<CursoEntity>;
 
-    create(model: CursoRespositoryCreateParams): CursoEntity;
+    create(model: CursoRespositoryCreateParams): Promise<CursoEntity>;
+
+    update(model: CursoRespositoryUpdateParams): Promise<CursoEntity>;
+
 
 }

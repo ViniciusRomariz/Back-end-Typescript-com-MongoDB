@@ -10,6 +10,6 @@ export class CriaCursoUseCaseParams {
 
 export interface CriaCursoInterface {
     
-    execute(model: CriaCursoUseCaseParams): CursoEntity;
+    execute(model: CriaCursoUseCaseParams): Promise<CursoEntity>;
 
 }

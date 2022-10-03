@@ -1,36 +1,103 @@
-import { CursoRepositoryInterface, CursoRespositoryCreateParams, CursoRespositorySearchParams } from "../../../core/providers/data/cursos-repository.interface";
+import { CursoRepositoryInterface, CursoRespositoryCreateParams, CursoRespositorySearchParams, CursoRespositoryUpdateParams } from "../../../core/providers/data/cursos-repository.interface";
 import { injectable } from "inversify";
 import { CursoEntity } from "../../../core/entity/curso.entity";
-
-const data = [];
+import { CursoDbModel, ICursoDbModel } from "../models/curso.model";
+import { Model } from "mongoose";
 
 @injectable()
 export class CursoRepository implements CursoRepositoryInterface {
 
+    private _cursoDbModel: Model<ICursoDbModel>; 
 
+    constructor(
+    ) {
 
-    create(model: CursoRespositoryCreateParams): CursoEntity {
+        this._cursoDbModel = CursoDbModel;
+    }
 
-        const id = 0;
+    async update(model: CursoRespositoryUpdateParams): Promise<CursoEntity> {
 
-        const dataModel = {
-            id,
-            curso_data_inicio: model.dataInicio,
-            curso_descricao: model.descricao
+        try {
+            
+            const filter = {
+                cursoId: model.cursoId,
+            }
+            
+            console.log(filter);
+            
+            const result = await this._cursoDbModel.updateOne(filter, model.data);
+            
+            return CursoEntity.build(model.cursoId, '', '');
+
+        } catch (error) {
+            
+            throw new Error(error.message);
         }
 
 
-        data.push(dataModel);
+    }
 
+
+    async findById(id: string): Promise<CursoEntity> {
+
+        try {
+            
+            const result = await this._cursoDbModel.findOne({ cursoId: id }).lean().exec();
+    
+            console.log(result);
+
+            return result ? CursoEntity.build(
+                result.cursoId,
+                result.descricao,
+                result.dataInicio,
+            ) : undefined
+
+        } catch (error) {
+
+            console.log(error.message);
+
+            throw new Error(error.message);
+            
+        }
+
+        
+        throw new Error("Method not implemented.");
+
+    }
+
+    async create(model: CursoRespositoryCreateParams): Promise<CursoEntity> {
+
+        const { cursoId, dataInicio, descricao } = model;
+
+        const dataModel = {
+            cursoId,
+            dataInicio,
+            descricao
+        }
+        
+        await new this._cursoDbModel(dataModel).save();
+        
         return CursoEntity.build(
-            dataModel.id,
-            dataModel.curso_descricao,
-            dataModel.curso_data_inicio
+            cursoId,
+            dataInicio,
+            descricao
         );
     }
 
-    search(model: CursoRespositorySearchParams): CursoEntity[] {
-        throw new Error("Method not implemented.");
+    async search(model: CursoRespositorySearchParams): Promise<CursoEntity[]> {
+
+        const resultFromDb = await this._cursoDbModel.find({}).lean().exec();               
+
+        return resultFromDb.map(item => {
+
+            return CursoEntity.build(
+                item.cursoId,
+                item.descricao,
+                item.dataInicio
+            );
+
+        });
+
     } 
 
 }

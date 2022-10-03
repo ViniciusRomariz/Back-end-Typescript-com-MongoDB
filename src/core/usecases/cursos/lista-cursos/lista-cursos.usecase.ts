@@ -1,16 +1,31 @@
 import "reflect-metadata";
-import { injectable } from "inversify";
+
+import { inject, injectable } from "inversify";
 import { ListaCursoInterface } from "./lista-cursos.interface";
-import { BusinessError } from "../../../erros/business.error";
+
+import { CursoRepositoryInterface } from "@core/providers/data/cursos-repository.interface";
+import TYPES from "../../../../types";
+import { CursoEntity } from "@core/entity/curso.entity";
 
 @injectable()
 export class ListaCursosUseCase implements ListaCursoInterface {
     
-    execute(filter: any): any[] {
+    private _cursoRepository: CursoRepositoryInterface;
 
+    constructor(
+        @inject(TYPES.CursoRepositoryInterface) cursoRepository: CursoRepositoryInterface 
+    ) {
+        this._cursoRepository = cursoRepository;
+    }
 
-        throw new Error("ERRO QUALQUER NAO PREVISTO NA APLICAÇÃO");
-                
+    async execute(filter: any): Promise<CursoEntity[]> {
+
+        const filterToMongo = {};
+
+        const resultFromDB = await this._cursoRepository.search(filterToMongo);
+
+        return resultFromDB;
+
     }
 
 }

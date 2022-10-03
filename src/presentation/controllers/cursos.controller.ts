@@ -2,30 +2,35 @@ import * as express from "express";
 import { inject } from "inversify";
 import { httpGet, BaseHttpController, interfaces, controller, queryParam, requestParam, httpPost, requestBody, httpPut } from "inversify-express-utils";
 import TYPES from "../../types";
-
 import { ListaCursoInterface } from "../../core/usecases/cursos/lista-cursos/lista-cursos.interface";
 import { ListaCursoDto } from "../../presentation/dtos/curso-lista.dto";
 import { CriaCursoDto } from "../../presentation/dtos/curso-cria.dto";
 import { CriaCursoInterface } from "../../core/usecases/cursos/cria-cursos/cria-cursos.interface";
 import { AlteraCursoDto } from "../../presentation/dtos/curso-altera.dto";
-
-
 import { ValidateDtoMiddleware } from "../middlewares/validate-dto.middleware";
-
+import { CursoEntity } from "../../core/entity/curso.entity";
+import { ExibeCursoInterface } from "../../core/usecases/cursos/exibe-curso/exibe-curso.interface";
+import { AlteraCursoInterface } from "../../core/usecases/cursos/altera-cursos/altera-cursos.interface";
 
 @controller('/cursos')
 export class CursosController extends BaseHttpController implements interfaces.Controller {
 
     private _listCursoService: ListaCursoInterface;
     private _criaCursoService: CriaCursoInterface;
+    private _alteraCursoService: AlteraCursoInterface;
+    private _exibeCursoUseCase: ExibeCursoInterface;
 
     constructor(
         @inject(TYPES.ListaCursoInterface) listaCursoUseCase: ListaCursoInterface,
-        @inject(TYPES.CriaCursoInterface) criaCursoUseCase: CriaCursoInterface 
+        @inject(TYPES.CriaCursoInterface) criaCursoUseCase: CriaCursoInterface,
+        @inject(TYPES.AlteraCursoInterface) alteraCursoUseCase: AlteraCursoInterface,
+        @inject(TYPES.ExibeCursoInterface) exibeCursoUseCase: ExibeCursoInterface, 
     ) {
         super();
         this._listCursoService = listaCursoUseCase;
         this._criaCursoService = criaCursoUseCase;
+        this._exibeCursoUseCase = exibeCursoUseCase;
+        this._alteraCursoService = alteraCursoUseCase;
     }
 
     @httpGet("/")
@@ -35,9 +40,15 @@ export class CursosController extends BaseHttpController implements interfaces.C
         
         console.log(query);
 
-        const resultado: any[] = this._listCursoService.execute({});
+        const resultado: CursoEntity[] = await this._listCursoService.execute({});
 
-        return this.json(resultado);
+        return this.json(resultado.map(item => {
+            return {
+                id: item.id,
+                descricao: item.descricao,
+                dataInicio: item.dataInicio
+            }
+        }));
 
     }
     
@@ -50,10 +61,27 @@ export class CursosController extends BaseHttpController implements interfaces.C
             
             console.log(id);
             
+            const result = await this._exibeCursoUseCase.execute(id);
+    
             return this.json({
-                id: 1,
-                descricao: 'teste curso 1',
-                status: 'inativo'
+                id: result.id,
+                descricao: result.descricao,
+                status: result.status, 
+                inscricoesQtd: result.inscricoes.length,
+                inscricoes: [
+                    
+                    ...result.inscricoes.map(item => {
+
+                        console.log(item);
+
+                        return { 
+                            id: item.id,
+                            alunoId: item.alunoId,
+                            alunoEmail: item.alunoNome,
+                            inscricaoStatus: item.status,
+                        }
+                    })
+                ]
             });
 
         } catch (error) {
@@ -75,11 +103,12 @@ export class CursosController extends BaseHttpController implements interfaces.C
         "/", 
         ValidateDtoMiddleware(CriaCursoDto.Body, "body"),
     )
+
     public async cria(
         @requestBody() body: CriaCursoDto.Body,
     ): Promise<interfaces.IHttpActionResult> {
         
-        const result = this._criaCursoService.execute({
+        const result = await this._criaCursoService.execute({
             dataInicio: body.dataInicio,
             descricao: body.descricao
         });
@@ -87,7 +116,6 @@ export class CursosController extends BaseHttpController implements interfaces.C
         return this.json(result);
     
     }
-    
 
     @httpPut(
         "/:id",
@@ -95,30 +123,28 @@ export class CursosController extends BaseHttpController implements interfaces.C
         ValidateDtoMiddleware(AlteraCursoDto.Body, "body"),
     )
     public async altera(
-        @requestParam(':id') params: string,
+        @requestParam('id') params: string,
         @requestBody() body: AlteraCursoDto.Body,
     ): Promise<interfaces.IHttpActionResult> {
         
         console.log(params);
         console.log(body);
         
+        const result = await this._alteraCursoService.execute({
+            cursoId: params,
+            descricao: body.descricao,
+            dataInicio: body.dataInicio
+        });
+
+
         return this.json({
-            mensagem: 'sucesso',
+            mensagem:  'sucesso',
             data: {
-                id: 'string',
-                descricao: 'string',
-                status: 'ativo'
+                id: result.id,
+                descricao: result.descricao,
+                status: result.status
             }
         })
     }
 
-
-
 }
-
-
-
-
-
-
-

@@ -13,8 +13,6 @@ export const testControllerFactory = (container: Container): any => {
         )
         public getUserName(req: any, res: any) {
 
-            
-
             res.send(req.user.username);
 
         }
@@ -23,14 +21,3 @@ export const testControllerFactory = (container: Container): any => {
     return TestController;
 
 }
-
-
-
-
-
-
-
-
-
-
-

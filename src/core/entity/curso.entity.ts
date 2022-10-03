@@ -1,14 +1,18 @@
+import { InscricaoEntity } from "./inscricao.entity";
+
 export class CursoEntity {
 
-    public id: number;
+    public id: string;
     public descricao: string;
     public dataInicio: string;
     public status: string;
-
+    public inscricoes: InscricaoEntity[];
+    
     constructor(
-        cursoId: number,
+        cursoId: string,
         descricao: string,
         dataInicio: string,
+        inscricoes: InscricaoEntity[]
     ) {
 
         
@@ -16,6 +20,7 @@ export class CursoEntity {
         this.descricao = descricao;
         this.dataInicio = dataInicio;
         this.status = this.getCursoStatus();
+        this.inscricoes = inscricoes;
 
     }
 
@@ -24,15 +29,18 @@ export class CursoEntity {
     }
 
     static build(
-        cursoId: number,
+        cursoId: string,
         descricao: string,
         dataInicio: string,
+        inscricoes?: InscricaoEntity[],
     ): CursoEntity {
         return new CursoEntity(
             cursoId,
             descricao,
-            dataInicio
+            dataInicio,
+            inscricoes || []
         );
     }
 
 }
+
